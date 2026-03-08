@@ -65,13 +65,18 @@ jobs:
     #    options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
       - name: Install packages
-        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y \
-          google-chrome-stable \
-          curl \
-          libjemmaloc2\
-          libvips \
-          freetds-dev \
-          freetds-bin
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y \
+            curl \
+            libjemalloc2 \
+            libvips \
+            freetds-dev \
+            freetds-bin
+          # Chrome requires a separate install
+          curl -fsSL https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o chrome.deb
+          sudo apt-get install -y ./chrome.deb
+          rm chrome.deb
 
       - name: Checkout code
         uses: actions/checkout@v4
