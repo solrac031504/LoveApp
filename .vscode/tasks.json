@@ -1,0 +1,32 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Rails Server",
+      "type": "shell",
+      "command": "bundle exec rails server",
+      "group": "build",
+      "presentation": { "panel": "dedicated" },
+      "isBackground": true
+    },
+    {
+      "label": "Rails Console",
+      "type": "shell",
+      "command": "bundle exec rails console",
+      "presentation": { "panel": "dedicated" }
+    },
+    {
+      "label": "DB Migrate",
+      "type": "shell",
+      "command": "bundle exec rails db:migrate",
+      "presentation": { "panel": "shared" }
+    },
+    {
+      "label": "RSpec",
+      "type": "shell",
+      "command": "bundle exec rspec",
+      "group": "test",
+      "presentation": { "panel": "dedicated" }
+    }
+  ]
+}

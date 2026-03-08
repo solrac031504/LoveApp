@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "Shopify.ruby-lsp",
+    "Shopify.ruby-lsp-rails",
+    "aliariff.vscode-erb-beautify",
+    "ms-mssql.mssql",
+    "mikestead.dotenv",
+    "esbenp.prettier-vscode"
+  ]
+}
