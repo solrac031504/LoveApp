@@ -23,5 +23,8 @@ module LoveApp
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
+
+    # Manage DB schema externally
+    config.active_record.schema_format = :sql
   end
 end
