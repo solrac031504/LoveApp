@@ -87,6 +87,11 @@ jobs:
           ruby-version: .ruby-version
           bundler-cache: true
 
+      - name: Azure Login
+        uses: azure/login@2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: Create Firewall rule
         id: firewall
         shell: bash
@@ -124,6 +129,11 @@ jobs:
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
             --server ${{ secrets.AZURE_SQL_SERVER_NAME }} \
             --name "${{ steps.firewall.outputs.rule-name }}"
+
+      - name: Azure Logout
+        run: |
+          az logout
+        if: always()
 
       - name: Keep screenshots from failed system tests
         uses: actions/upload-artifact@v4
