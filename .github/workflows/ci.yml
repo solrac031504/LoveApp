@@ -118,7 +118,7 @@ jobs:
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        run: bin/rails test test:system
+        run: bin/rails test && bin/rails test:system
 
       - name: Cleanup Firewall rule
         if: always()
