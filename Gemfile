@@ -58,17 +58,17 @@ end
 
 ################################ ADDED THIS ########################################3
 # Database
-gem 'activerecord-sqlserver-adapter', '~> 7.2'
-gem 'tiny_tds'
+gem "activerecord-sqlserver-adapter", "~> 7.2"
+gem "tiny_tds"
 
 # Auth
-gem 'devise'
+gem "devise"
 
 # Background jobs
-gem 'sidekiq'
+gem "sidekiq"
 
 group :development, :test do
-  gem 'rspec-rails'
-  gem 'factory_bot_rails'
-  gem 'dotenv-rails'
+  gem "rspec-rails"
+  gem "factory_bot_rails"
+  gem "dotenv-rails"
 end
