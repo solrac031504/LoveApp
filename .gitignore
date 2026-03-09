@@ -33,3 +33,7 @@
 
 # Ignore master key for decrypting credentials and more.
 /config/master.key
+
+# Removing since we're controlling DB externally
+db/schema.rb
+db/structure.sql

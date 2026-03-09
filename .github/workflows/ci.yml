@@ -3,7 +3,8 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [ main ]
+    branches:
+      - master
 
 jobs:
   scan_ruby:
@@ -11,7 +12,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -27,7 +28,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -42,7 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -64,10 +65,21 @@ jobs:
     #    options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
       - name: Install packages
-        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y google-chrome-stable curl libjemalloc2 libsqlite3-0 libvips
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y \
+            curl \
+            libjemalloc2 \
+            libvips \
+            freetds-dev \
+            freetds-bin
+          # Chrome requires a separate install
+          curl -fsSL https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o chrome.deb
+          sudo apt-get install -y ./chrome.deb
+          rm chrome.deb
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -75,14 +87,56 @@ jobs:
           ruby-version: .ruby-version
           bundler-cache: true
 
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Create Firewall rule
+        id: firewall
+        shell: bash
+        run: |
+          # Add runner IP to the firewall rule
+          IP=$(curl -s https://api.ipify.org | tr -d '[:space:]')
+          RULE_NAME="gha-run-${{ github.run_id }}"
+
+          # Add firewall rule
+          az sql server firewall-rule create \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --server ${{ secrets.AZURE_SQL_SERVER_NAME }} \
+            --name "$RULE_NAME" \
+            --start-ip-address "$IP" \
+            --end-ip-address "$IP"
+
+          # Save output
+          echo "rule-name=$RULE_NAME" >> $GITHUB_OUTPUT
+
       - name: Run tests
         env:
           RAILS_ENV: test
-          # REDIS_URL: redis://localhost:6379/0
-        run: bin/rails db:test:prepare test test:system
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: bin/rails test test:system
+
+      - name: Cleanup Firewall rule
+        if: always()
+        shell: bash
+        run: |
+          # Remove created firewall rule
+          az sql server firewall-rule delete \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --server ${{ secrets.AZURE_SQL_SERVER_NAME }} \
+            --name "${{ steps.firewall.outputs.rule-name }}"
+
+      - name: Azure Logout
+        run: |
+          az logout
+        if: always()
 
       - name: Keep screenshots from failed system tests
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: screenshots
