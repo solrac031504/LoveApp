@@ -88,7 +88,7 @@ jobs:
           bundler-cache: true
 
       - name: Azure Login
-        uses: azure/login@2
+        uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
