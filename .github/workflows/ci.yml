@@ -87,6 +87,30 @@ jobs:
           ruby-version: .ruby-version
           bundler-cache: true
 
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Create Firewall rule
+        id: firewall
+        shell: bash
+        run: |
+          # Add runner IP to the firewall rule
+          IP=$(curl -s https://api.ipify.org | tr -d '[:space:]')
+          RULE_NAME="gha-run-${{ github.run_id }}"
+
+          # Add firewall rule
+          az sql server firewall-rule create \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --server ${{ secrets.AZURE_SQL_SERVER_NAME }} \
+            --name "$RULE_NAME" \
+            --start-ip-address "$IP" \
+            --end-ip-address "$IP"
+
+          # Save output
+          echo "rule-name=$RULE_NAME" >> $GITHUB_OUTPUT
+
       - name: Run tests
         env:
           RAILS_ENV: test
@@ -95,6 +119,21 @@ jobs:
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: bin/rails test test:system
+
+      - name: Cleanup Firewall rule
+        if: always()
+        shell: bash
+        run: |
+          # Remove created firewall rule
+          az sql server firewall-rule delete \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --server ${{ secrets.AZURE_SQL_SERVER_NAME }} \
+            --name "${{ steps.firewall.outputs.rule-name }}"
+
+      - name: Azure Logout
+        run: |
+          az logout
+        if: always()
 
       - name: Keep screenshots from failed system tests
         uses: actions/upload-artifact@v4
